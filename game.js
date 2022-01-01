@@ -207,6 +207,13 @@ const bird = {
                 this.rotation = -25 * DEGREE
             };
         }
+
+        //Canvas top max
+        if (this.y - this.h/2 <= 0) {
+            this.y = this.h/2
+            this.y = this.h/2;
+            this.speed = 0;
+        }
     },
 
     speedReset : function() {
@@ -301,7 +308,7 @@ const pipes = {
             let bottomPipesYPos = p.y + this.h + this.gap;
             
             //Top pipes touch
-            if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y - bird.radius < p.y + this.h && bird.y + bird.radius > p.y) {
+            if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y - bird.radius < p.y + this.h) {
                 state.current = state.over;
                 HIT.play();
                 //No score = dumb
