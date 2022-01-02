@@ -313,9 +313,6 @@ const pipes = {
 
             if (p.x + this.w <= 0) {
                 this.position.shift();
-            }
-
-            if (p.x + this.w == bird.x - bird.w/2) {
                 score.value += 1;
                 SCORE.play();
 
