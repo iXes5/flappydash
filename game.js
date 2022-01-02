@@ -71,6 +71,7 @@ document.addEventListener("click", function(evt) {
 })
 document.addEventListener("keypress", function() {
     if (state.current == state.game) {
+        bird.dash();
         for (let i = 0; i < pipes.position.length; i++) {
             let p = pipes.position[i];
             dash = 70;
@@ -140,6 +141,9 @@ const bird = {
     jump : 4,
     rotation : 0,
 
+    d : -70,
+    tY : 0,
+
     draw : function() {
         let bird = this.animation[this.frame];
 
@@ -148,6 +152,9 @@ const bird = {
         ctx.rotate(this.rotation);
         ctx.drawImage(sprite, bird.sX, bird.sY, this.w, this.h, - this.w/2, - this.h/2, this.w, this.h);
         ctx.restore();
+
+        ctx.fillStyle = "#ffff00";
+        ctx.fillRect(this.d, this.tY, 70, 4);
     },
 
     flap : function() {
@@ -194,7 +201,13 @@ const bird = {
     },
 
     speedReset : function() {
-        this.speed = 0
+        this.speed = 0;
+        this.d = -70;
+    },
+
+    dash : function() {
+        this.d = this.x - this.w/2 - 70;
+        this.tY = this.y - 2;
     }
 }
 
@@ -321,6 +334,9 @@ const pipes = {
                 localStorage.setItem("best", score.best);
             }
         }
+
+        //Move the tail of bird to left, bird if put this into the bird, its so difficult to repair so i decided to put this one here and it worked, not lucky man, its my talent
+        bird.d -= this.dx;
     },
 
     reset : function() {
@@ -370,7 +386,6 @@ function draw() {
     getReady.draw();
     gameOver.draw();
     score.draw();
-
 }
 
 //Update
