@@ -69,26 +69,16 @@ document.addEventListener("click", function(evt) {
             break;
     }
 })
-document.body.onkeyup = function(e){
-    if(e.keyCode == 32){
-        switch (state.current) {
-            case state.getReady:
-                state.current = state.game;
-                SWOOSHING.play();
-                break;
-            case state.game:
-                bird.flap();
-                FLAP.play();
-                break;                                  
-            case state.over:
-                pipes.reset();
-                bird.speedReset();
-                score.reset();
-                state.current = state.getReady;
-                break;
+document.addEventListener("keypress", function() {
+    if (state.current == state.game) {
+        for (let i = 0; i < pipes.position.length; i++) {
+            let p = pipes.position[i];
+            dash = 70;
+            p.x -= dash;
+            OVER.play();
         }
     }
-}
+})
 
 //Background
 const bg = {
@@ -136,7 +126,7 @@ const bird = {
         {sX : 276, sY : 164},
         {sX : 276, sY : 139},
     ],
-    x : 50,
+    x : 120,
     y : 150,
     w : 34,
     h : 26,
@@ -147,7 +137,7 @@ const bird = {
 
     speed : 0,
     gravity : 0.25,
-    jump : 4.5,
+    jump : 4,
     rotation : 0,
 
     draw : function() {
@@ -185,7 +175,7 @@ const bird = {
                 this.y = cvs.height - fg.h - this.h/2;
                 if (state.current == state.game) {
                     state.current = state.over;
-                    OVER.play();
+                    HIT.play();
                     //No score = dumb
                     if (score.value == 0) {
                         NGU.play()
@@ -263,7 +253,7 @@ const pipes = {
 
     w : 53,
     h : 400,
-    gap : 90,
+    gap : 65,
     maxYPos : -150,
     dx : 2,
 
@@ -286,7 +276,7 @@ const pipes = {
         if (state.current !== state.game) return;
 
         //Add pipes per 100 frames
-        if (frames%100 == 0) {
+        if (frames%120 == 0) {
             this.position.push({
                 x : cvs.width,
                 y : this.maxYPos * (Math.random() + 1),
