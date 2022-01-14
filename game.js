@@ -9,6 +9,8 @@ const DEGREE = Math.PI/180;
 //Load sprite image
 const sprite = new Image();
 sprite.src = "image/sprite.png";
+const chicArt = new Image();
+chicArt.src = "image/chicken.png";
 
 //Load sounds
 const SCORE = new Audio();
@@ -19,14 +21,10 @@ const HIT = new Audio();
 HIT.src = "audio/hit.wav";
 const SWOOSHING = new Audio();
 SWOOSHING.src = "audio/swooshing.wav";
-const OVER = new Audio();
-OVER.src = "audio/end.wav";
-const NGU = new Audio();
-NGU.src = "audio/occho.m4a";
-const ADU = new Audio();
-ADU.src = "audio/adu.m4a";
-const TROI = new Audio();
-TROI.src = "audio/troi.m4a";
+const DASH = new Audio();
+DASH.src = "audio/end.wav";
+const CHICKEN = new Audio();
+CHICKEN.src = "audio/chicken.m4a"
 
 //Game state
 const state = {
@@ -38,7 +36,7 @@ const state = {
 
 //Start button
 const startButton = {
-    x : 118,
+    x : 183,
     y : 310,
     w : 83,
     h : 29
@@ -69,17 +67,25 @@ document.addEventListener("click", function(evt) {
             break;
     }
 })
-document.addEventListener("keypress", function() {
-    if (state.current == state.game) {
-        bird.dash();
-        for (let i = 0; i < pipes.position.length; i++) {
-            let p = pipes.position[i];
-            dash = 70;
-            p.x -= dash;
-            OVER.play();
+document.addEventListener("keypress", (event) => {
+    var key = event.code;
+
+    //Press D for dash
+    if (key == "KeyD") {
+        if (state.current == state.game) {
+            bird.dash();
+            pipes.cut();
+            DASH.play();
+        }
+    };
+
+    //Press A to shoot
+    if (key == "KeyA") {
+        if (state.current == state.game) {
+            bird.shoot();
         }
     }
-})
+}, false)
 
 //Background
 const bg = {
@@ -109,6 +115,7 @@ const fg = {
     draw : function() {
         ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
         ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x + this.w, this.y, this.w, this.h);
+        ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x + this.w*2, this.y, this.w, this.h);
     },
 
     update : function() {
@@ -127,7 +134,7 @@ const bird = {
         {sX : 276, sY : 164},
         {sX : 276, sY : 139},
     ],
-    x : 120,
+    x : 160,
     y : 150,
     w : 34,
     h : 26,
@@ -141,8 +148,12 @@ const bird = {
     jump : 4,
     rotation : 0,
 
-    d : -70,
-    tY : 0,
+    tail : [],
+    dashGap : 70,
+    dx : 2,
+
+    bullet : [],
+    bulletSpeed : 30,
 
     draw : function() {
         let bird = this.animation[this.frame];
@@ -152,9 +163,28 @@ const bird = {
         ctx.rotate(this.rotation);
         ctx.drawImage(sprite, bird.sX, bird.sY, this.w, this.h, - this.w/2, - this.h/2, this.w, this.h);
         ctx.restore();
+        
+        //Draw tail
+        for (let i = 0; i < this.tail.length; i++) {
+            if (state.current !== state.game) return;
+            let t = this.tail[i];
 
-        ctx.fillStyle = "#ffff00";
-        ctx.fillRect(this.d, this.tY, 70, 4);
+            let tailX = t.tX;
+            let tailY = t.tY;
+            ctx.fillStyle = "#ffff00";
+            ctx.fillRect(tailX, tailY, this.dashGap, 4);
+        }
+
+        //Draw bullet
+        for (let i = 0; i < this.bullet.length; i++) {
+            if (state.current !== state.game) return;
+            let b = this.bullet[i];
+
+            let bulletX = b.bX;
+            let bulletY = b.bY;
+            ctx.fillStyle = "#ff4500";
+            ctx.fillRect(bulletX, bulletY, 8, 4);
+        }
     },
 
     flap : function() {
@@ -183,10 +213,6 @@ const bird = {
                 if (state.current == state.game) {
                     state.current = state.over;
                     HIT.play();
-                    //No score = dumb
-                    if (score.value == 0) {
-                        NGU.play()
-                    }
                 }
             };
 
@@ -201,21 +227,96 @@ const bird = {
 
         //Canvas top max
         if (this.y - this.h/2 <= 0) {
-            this.y = this.h/2
             this.y = this.h/2;
             this.speed = 0;
         }
+
+        //Tail move to the left
+        for (let i = 0; i < this.tail.length; i++) {
+            if (state.current !== state.game) return;
+            let t = this.tail[i];
+
+            t.tX -= this.dx;
+
+            //Shift the tail when it go beyone the canvas
+            if (t.tX + this.dashGap <= 0) {
+                this.tail.shift();
+            }
+        }
+        
+        //Bullet move fast to the right
+        if (frames%5==0) {
+            for (let i = 0; i < this.bullet.length; i++) {
+                if (state.current !== state.game) return;
+                let b = this.bullet[i];
+
+                //Move the bullet very fast to the right
+                b.bX += this.bulletSpeed;
+            }
+        }
+
+        //Control the bullet
+        for (let i = 0; i < this.bullet.length; i++) {
+            if (state.current !== state.game) return;
+            let b = this.bullet[i];
+
+            //Shift the bullet when it touches the pipes
+            for (let j = 0; j < pipes.position.length; j++) {
+                let p = pipes.position[j];
+
+                //Bullet touches top pipe
+                if (b.bX + 8 >= p.x && b.bX <= p.x + pipes.w && b.bY <= p.y + pipes.h) {
+                    this.bullet.shift();
+                }
+
+                //Bullet touches bottom pipe
+                if (b.bX + 8 >= p.x && b.bX <= p.x + pipes.w && b.bY >= p.y + pipes.h + pipes.gap) {
+                    this.bullet.shift();
+                }
+
+                //Bullet touches the chicken
+                if (p.z > 0.7 && b.bX + 8 >= p.x && b.bX <= p.x + pipes.w && b.bY > p.y + pipes.h && b.bY < p.y + pipes.h + pipes.gap) {
+                    p.z = 0;
+                    CHICKEN.play();
+
+                    score.value += 1;
+                    score.best = Math.max(score.best, score.value);
+                    localStorage.setItem("best", score.best);
+                }
+            }
+        }
+    },
+
+    dash : function() {
+        //Increase the tail
+        this.tail.push({
+            tX : this.x - this.w/2 - 70,
+            tY : this.y - 2,
+        });
+
+        for (let i = 0; i < this.tail.length - 1; i++) {
+            if (state.current !== state.game) return;
+            let t = this.tail[i];
+
+            //Move the tail to the left when dash  make it really
+            t.tX = t.tX - this.dashGap;
+        }
+    },
+
+    shoot : function() {
+        //Add bullet
+        this.bullet.push({
+            bX : this.x + this.w/2,
+            bY : this.y - 2,
+        })
     },
 
     speedReset : function() {
         this.speed = 0;
         this.d = -70;
+        this.tail = [];
+        this.bullet = [];
     },
-
-    dash : function() {
-        this.d = this.x - this.w/2 - 70;
-        this.tY = this.y - 2;
-    }
 }
 
 //Get ready
@@ -266,22 +367,38 @@ const pipes = {
 
     w : 53,
     h : 400,
-    gap : 65,
+    gap : 60,
     maxYPos : -150,
     dx : 2,
+    dash : 70,
+    
+    chiW : 652,
+    chiH : 779,
 
     draw : function() {
         for (let i = 0; i < this.position.length; i++) {
             let p = this.position[i];
 
             let topYPos = p.y;
+            let midYPos = p.y + this.h;
             let bottomYPos = p.y + this.h + this.gap;
 
-            //Top pipes
-            ctx.drawImage(sprite, this.top.sX, this.top.sY, this.w, this.h, p.x, topYPos, this.w, this.h);
+            if (p.z <= 0.7) {
+                //Top pipes
+                ctx.drawImage(sprite, this.top.sX, this.top.sY, this.w, this.h, p.x, topYPos, this.w, this.h);
 
-            //Bottom pipes
-            ctx.drawImage(sprite, this.bottom.sX, this.bottom.sY, this.w, this.h, p.x, bottomYPos, this.w, this.h);
+                //Bottom pipes
+                ctx.drawImage(sprite, this.bottom.sX, this.bottom.sY, this.w, this.h, p.x, bottomYPos, this.w, this.h);
+            }else {
+                //Top pipes
+                ctx.drawImage(sprite, this.top.sX, this.top.sY, this.w, this.h, p.x, topYPos, this.w, this.h);
+
+                //Add challenger
+                ctx.drawImage(chicArt,  0, 0, this.chiW, this.chiH, p.x, midYPos, this.w, this.gap)
+
+                //Bottom pipes
+                ctx.drawImage(sprite, this.bottom.sX, this.bottom.sY, this.w, this.h, p.x, bottomYPos, this.w, this.h);
+            }
         }
     },
 
@@ -289,10 +406,11 @@ const pipes = {
         if (state.current !== state.game) return;
 
         //Add pipes per 100 frames
-        if (frames%120 == 0) {
+        if (frames%140 == 0) {
             this.position.push({
                 x : cvs.width,
                 y : this.maxYPos * (Math.random() + 1),
+                z : Math.random()
             })
         };
         
@@ -308,20 +426,18 @@ const pipes = {
             if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y - bird.radius < p.y + this.h) {
                 state.current = state.over;
                 HIT.play();
-                //No score = dumb
-                if (score.value == 0) {
-                    NGU.play()
-                }
+            }
+
+            //Mid pipes touch
+            if (p.z > 0.7 && bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y - bird.radius > p.y + this.h && bird.y + bird.radius < bottomPipesYPos) {
+                state.current = state.over;
+                HIT.play();
             }
 
             //Bottom pipes touch
             if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y + bird.radius > bottomPipesYPos) {
                 state.current = state.over;
                 HIT.play();
-                //No score = dumb
-                if (score.value == 0) {
-                    NGU.play()
-                }
             }
 
             if (p.x + this.w <= 0) {
@@ -329,21 +445,19 @@ const pipes = {
                 score.value += 1;
                 SCORE.play();
 
-                //Sound of me (for the good player)
-                if (score.value == 10) {
-                    ADU.play();
-                }
-                if (score.value == 25) {
-                    TROI.play();
-                }
-
                 score.best = Math.max(score.best, score.value);
                 localStorage.setItem("best", score.best);
             }
         }
+    },
 
-        //Move the tail of bird to left, bird if put this into the bird, its so difficult to repair so i decided to put this one here and it worked, not lucky man, its my talent
-        bird.d -= this.dx;
+    cut : function() {
+        for (let i = 0; i < this.position.length; i++) {
+            let p = this.position[i];
+            //Move the pipes to the left
+            p.x -= this.dash;
+            DASH.play();
+        }
     },
 
     reset : function() {
