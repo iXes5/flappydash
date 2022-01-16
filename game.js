@@ -11,6 +11,8 @@ const sprite = new Image();
 sprite.src = "image/sprite.png";
 const chicArt = new Image();
 chicArt.src = "image/chicken.png";
+const star = new Image();
+star.src = "image/star.png"
 
 //Load sounds
 const SCORE = new Audio();
@@ -25,6 +27,10 @@ const DASH = new Audio();
 DASH.src = "audio/end.wav";
 const CHICKEN = new Audio();
 CHICKEN.src = "audio/chicken.m4a"
+const SHOOT = new Audio();
+SHOOT.src = "audio/shoot.m4a"
+const SKILL = new Audio();
+SKILL.src = "audio/flash.m4a"
 
 //Game state
 const state = {
@@ -70,6 +76,30 @@ document.addEventListener("click", function(evt) {
 document.addEventListener("keypress", (event) => {
     var key = event.code;
 
+    //Press A to control bird's height (like "click")
+    switch (state.current) {
+        case state.getReady:
+            state.current = state.game;
+            SWOOSHING.play();
+            break;
+        case state.game:
+            bird.flap();
+            FLAP.play();
+            break;                                  
+        case state.over:
+            let rect = cvs.getBoundingClientRect();
+            let clickX = evt.clientX - rect.left;
+            let clickY = evt.clientY - rect.top;
+            //Start button check
+            if (clickX >= startButton.x && clickX <= startButton.x + startButton.w && clickY >= startButton.y && clickY <= startButton.y + startButton.h) {
+                pipes.reset();
+                bird.speedReset();
+                score.reset();
+                state.current = state.getReady;
+            }
+            break;
+    }
+
     //Press D for dash
     if (key == "KeyD") {
         if (state.current == state.game) {
@@ -80,10 +110,25 @@ document.addEventListener("keypress", (event) => {
     };
 
     //Press A to shoot
-    if (key == "KeyA") {
+    if (key == "KeyS") {
         if (state.current == state.game) {
             bird.shoot();
         }
+    }
+
+    //Press Q for flash skill
+    if (key == "KeyQ") {
+        score.jump();
+    }
+
+    //Press W for boom skill
+    if (key == "KeyW") {
+        score.boom();
+    }
+
+    //Press E for shield skill
+    if (key == "KeyE") {
+        score.shield();
     }
 }, false)
 
@@ -126,6 +171,38 @@ const fg = {
     }
 }
 
+//Get ready
+const getReady = {
+    sX : 0,
+    sY : 228,
+    w : 173,
+    h : 152,
+    x : cvs.width/2 - 173/2,
+    y : cvs.height/2 - 152/2,
+
+    draw : function() {
+        if (state.current == state.getReady) {
+        ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
+        }
+    }
+}
+
+//Game over
+const gameOver = {
+    sX : 175,
+    sY : 228,
+    w : 225,
+    h : 202,
+    x : cvs.width/2 - 225/2,
+    y : cvs.height/2 - 202/2,
+
+    draw : function() {
+        if (state.current == state.over) {
+        ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
+        }
+    }
+}
+
 //Bird
 const bird = {
     animation : [
@@ -154,6 +231,8 @@ const bird = {
 
     bullet : [],
     bulletSpeed : 30,
+
+    protect : 0,
 
     draw : function() {
         let bird = this.animation[this.frame];
@@ -185,6 +264,13 @@ const bird = {
             ctx.fillStyle = "#ff4500";
             ctx.fillRect(bulletX, bulletY, 8, 4);
         }
+
+        //Draw shield
+        if (this.protect > 0) {
+            for (let i = 0; i < this.protect; i++) {
+                ctx.arc(this.x, this.y, 17 + i*4, 2*Math.PI, false);
+            }
+        }
     },
 
     flap : function() {
@@ -211,8 +297,14 @@ const bird = {
             if (this.y + this.h/2 >= cvs.height - fg.h) {
                 this.y = cvs.height - fg.h - this.h/2;
                 if (state.current == state.game) {
-                    state.current = state.over;
-                    HIT.play();
+                    if (this.protect > 0) {
+                        this.protect -= 1;
+                        this.y = 135;
+                        this.speed = 0;
+                    }else {
+                        state.current = state.over;
+                        HIT.play();
+                    }
                 }
             };
 
@@ -275,11 +367,13 @@ const bird = {
                 }
 
                 //Bullet touches the chicken
-                if (p.z > 0.7 && b.bX + 8 >= p.x && b.bX <= p.x + pipes.w && b.bY > p.y + pipes.h && b.bY < p.y + pipes.h + pipes.gap) {
+                if (p.z > 0.7 && b.bX + 8 >= p.x && b.bY > p.y + pipes.h && b.bY < p.y + pipes.h + pipes.gap) {
                     p.z = 0;
                     CHICKEN.play();
+                    this.bullet.shift();
 
-                    score.value += 1;
+                    score.value += 2;
+                    score.num += 2;
                     score.best = Math.max(score.best, score.value);
                     localStorage.setItem("best", score.best);
                 }
@@ -298,7 +392,7 @@ const bird = {
             if (state.current !== state.game) return;
             let t = this.tail[i];
 
-            //Move the tail to the left when dash  make it really
+            //Move the tail to the left when dash make it really
             t.tX = t.tX - this.dashGap;
         }
     },
@@ -308,7 +402,8 @@ const bird = {
         this.bullet.push({
             bX : this.x + this.w/2,
             bY : this.y - 2,
-        })
+        });
+        SHOOT.play();
     },
 
     speedReset : function() {
@@ -316,39 +411,8 @@ const bird = {
         this.d = -70;
         this.tail = [];
         this.bullet = [];
+        this.protect = 0;
     },
-}
-
-//Get ready
-const getReady = {
-    sX : 0,
-    sY : 228,
-    w : 173,
-    h : 152,
-    x : cvs.width/2 - 173/2,
-    y : cvs.height/2 - 152/2,
-
-    draw : function() {
-        if (state.current == state.getReady) {
-        ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
-        }
-    }
-}
-
-//Game over
-const gameOver = {
-    sX : 175,
-    sY : 228,
-    w : 225,
-    h : 202,
-    x : cvs.width/2 - 225/2,
-    y : cvs.height/2 - 202/2,
-
-    draw : function() {
-        if (state.current == state.over) {
-        ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
-        }
-    }
 }
 
 //Pipes
@@ -367,7 +431,7 @@ const pipes = {
 
     w : 53,
     h : 400,
-    gap : 60,
+    gap : 70,
     maxYPos : -150,
     dx : 2,
     dash : 70,
@@ -422,27 +486,52 @@ const pipes = {
 
             let bottomPipesYPos = p.y + this.h + this.gap;
             
-            //Top pipes touch
-            if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y - bird.radius < p.y + this.h) {
-                state.current = state.over;
-                HIT.play();
-            }
-
             //Mid pipes touch
-            if (p.z > 0.7 && bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y - bird.radius > p.y + this.h && bird.y + bird.radius < bottomPipesYPos) {
-                state.current = state.over;
-                HIT.play();
-            }
+            if (p.z > 0.7 && bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w) {
+                if (bird.protect > 0) {
+                    bird.protect -= 1;
+                    for (let j = 0; j < this.position.length; j++) {
+                        let p = pipes.position[j];
+                        p.x -= 100;
+                    }
+                }else {
+                    state.current = state.over;
+                    HIT.play();
+                }
+            }else {
+                //Top pipes touch
+                if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y - bird.radius < p.y + this.h) {
+                    if (bird.protect > 0) {
+                        bird.protect -= 1;
+                        for (let j = 0; j < this.position.length; j++) {
+                            let p = pipes.position[j];
+                            p.x -= 100;
+                        }
+                    }else {
+                        state.current = state.over;
+                        HIT.play();
+                    }
+                }
 
-            //Bottom pipes touch
-            if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y + bird.radius > bottomPipesYPos) {
-                state.current = state.over;
-                HIT.play();
+                //Bottom pipes touch
+                if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w && bird.y + bird.radius > bottomPipesYPos) {
+                    if (bird.protect > 0) {
+                        bird.protect -= 1;
+                        for (let j = 0; j < this.position.length; j++) {
+                            let p = pipes.position[j];
+                            p.x -= 100;
+                        }
+                    }else {
+                        state.current = state.over;
+                        HIT.play();
+                    }
+                }
             }
 
             if (p.x + this.w <= 0) {
                 this.position.shift();
                 score.value += 1;
+                score.num += 1;
                 SCORE.play();
 
                 score.best = Math.max(score.best, score.value);
@@ -469,11 +558,15 @@ const pipes = {
 const score = {
     best : parseInt(localStorage.getItem("best")) || 0,
     value : 0,
+    num : 0,
+    skill : 0,
+    flash : 200,
 
     draw : function() {
         ctx.fillStyle = "#FFF";
         ctx.strokeStyle = "#000";
 
+        //Draw the score in game, after game and the best score
         if (state.current == state.game) {
             ctx.lineWidth = 2;
             ctx.font = "35px Teko";
@@ -488,10 +581,55 @@ const score = {
             ctx.fillText(this.best, 225, 277);
             ctx.strokeText(this.best, 225, 277);
         }
+
+        //Draw the skill you have after 5 score
+        for (let i=0; i < this.skill; i++) {
+            ctx.drawImage(star, 0, 0, 2400, 2400, 30 + i*50, cvs.height - 30 - 50, 50, 50)
+        }
+    },
+
+    update : function() {
+        if (this.num >= 5) {
+            this.skill +=1;
+            this.num -= 5;
+        }
+    },
+
+    jump : function() {
+        if (this.skill > 0) {
+            for (let i = 0; i < pipes.position.length; i++) {
+                let p = pipes.position[i];
+                //Move the pipes very long to the left (flash)
+                p.x -= this.flash;
+                this.skill -= 1;
+                SKILL.play();
+            }
+        }
+    },
+
+    boom : function() {
+        if (this.skill > 1) {
+            //Delete all the pipes
+            this.value += pipes.position.length;
+            pipes.position = [];
+            this.skill -= 2;
+            SKILL.play();
+        }
+    },
+
+    shield : function() {
+        if (this.skill > 2) {
+            //Gain a shield protect the bird
+            bird.protect += 1;
+            this.skill -= 3;
+            SKILL.play();
+        }
     },
 
     reset : function() {
-        this.value = 0
+        this.value = 0;
+        this.num = 0;
+        this.skill = 0;
     }
 }
 
@@ -514,6 +652,7 @@ function update() {
     bird.update();
     fg.update();
     pipes.update();
+    score.update();
 }
 
 //Loop
