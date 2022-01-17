@@ -13,6 +13,8 @@ const chicArt = new Image();
 chicArt.src = "image/chicken.png";
 const star = new Image();
 star.src = "image/star.png"
+const circle = new Image();
+circle.src = "image/circle.png"
 
 //Load sounds
 const SCORE = new Audio();
@@ -37,7 +39,8 @@ const state = {
     current : 0,
     getReady : 0,
     game : 1,
-    over : 2
+    over : 2,
+    paradise : 3
 }
 
 //Start button
@@ -76,61 +79,57 @@ document.addEventListener("click", function(evt) {
 document.addEventListener("keypress", (event) => {
     var key = event.code;
 
-    //Press A to control bird's height (like "click")
-    switch (state.current) {
-        case state.getReady:
-            state.current = state.game;
-            SWOOSHING.play();
-            break;
-        case state.game:
-            bird.flap();
-            FLAP.play();
-            break;                                  
-        case state.over:
-            let rect = cvs.getBoundingClientRect();
-            let clickX = evt.clientX - rect.left;
-            let clickY = evt.clientY - rect.top;
-            //Start button check
-            if (clickX >= startButton.x && clickX <= startButton.x + startButton.w && clickY >= startButton.y && clickY <= startButton.y + startButton.h) {
-                pipes.reset();
-                bird.speedReset();
-                score.reset();
-                state.current = state.getReady;
-            }
-            break;
-    }
-
     //Press D for dash
-    if (key == "KeyD") {
-        if (state.current == state.game) {
+    if (key == "KeyD" && state.current == state.game) {
             bird.dash();
             pipes.cut();
             DASH.play();
-        }
-    };
+    }
 
-    //Press A to shoot
-    if (key == "KeyS") {
-        if (state.current == state.game) {
+    //Press S to shoot
+    if (key == "KeyS" && state.current == state.game) {
             bird.shoot();
-        }
     }
 
     //Press Q for flash skill
-    if (key == "KeyQ") {
+    if (key == "KeyQ" && state.current == state.game) {
         score.jump();
     }
 
     //Press W for boom skill
-    if (key == "KeyW") {
+    if (key == "KeyW" && state.current == state.game) {
         score.boom();
     }
 
     //Press E for shield skill
-    if (key == "KeyE") {
+    if (key == "KeyE" && state.current == state.game) {
         score.shield();
     }
+
+    //Press F to stop
+    if (key == "KeyF") {
+        if (state.current == state.game) {
+            state.current = state.paradise
+        }else if (state.current = state.paradise) {
+            stop.cardinal = 1;
+        }
+    }
 }, false)
+
+//Delay between paradise
+const stop = {
+    cardinal : 0,
+    count : 0,
+
+    update : function() {
+        this.count += this.cardinal
+        if (this.count == 60) {
+            state.current = state.game;
+            this.count = 0;
+            this.cardinal = 0;
+        }
+    }
+}
 
 //Background
 const bg = {
@@ -261,14 +260,14 @@ const bird = {
 
             let bulletX = b.bX;
             let bulletY = b.bY;
-            ctx.fillStyle = "#ff4500";
+            ctx.fillStyle = "#008000";
             ctx.fillRect(bulletX, bulletY, 8, 4);
         }
 
         //Draw shield
         if (this.protect > 0) {
             for (let i = 0; i < this.protect; i++) {
-                ctx.arc(this.x, this.y, 17 + i*4, 2*Math.PI, false);
+                ctx.drawImage(circle, 0, 0, 2000, 2000, this.x - 25 - i*10, this.y - 25 - i*10, 50 + 2*i*10, 50 + 2*i*10)
             }
         }
     },
@@ -287,10 +286,15 @@ const bird = {
         //Frame goes from 0 to 4, if 4 again to 0
         this.frame = this.frame%this.animation.length;
 
+        //No flap in paradise
+        if (state.current == state.paradise) {
+            this.frame = 1
+        }
+
         if (state.current == state.getReady) {
             this.y = 150;
             this.rotation = 0 * DEGREE;
-        }else {
+        }else if (state.current !== state.paradise) {
             this.speed += this.gravity;
             this.y += this.speed;
             //Foreground touch
@@ -653,6 +657,7 @@ function update() {
     fg.update();
     pipes.update();
     score.update();
+    stop.update();
 }
 
 //Loop
@@ -660,7 +665,9 @@ function loop() {
     update();
     draw();
 
-    frames++;
+    if (state.current !== state.paradise) {
+        frames++
+    }
 
     requestAnimationFrame(loop);
 }
