@@ -380,7 +380,7 @@ const bird = {
                 }
 
                 //Bullet touches the chicken
-                if (p.z > 0.7 && b.bX + 8 >= p.x && b.bY > p.y + pipes.h && b.bY < p.y + pipes.h + pipes.gap) {
+                if (p.z > 0.7 && b.bX + 8 >= p.x && b.bX <= p.x + pipes.w && b.bY > p.y + pipes.h && b.bY < p.y + pipes.h + pipes.gap) {
                     p.z = 0;
                     CHICKEN.play();
                     this.bullet.shift();
@@ -542,9 +542,14 @@ const pipes = {
             }
 
             if (p.x + this.w <= 0) {
+                if (p.z <= 0.7) {
+                    score.num += 1;
+                    score.value += 1;
+                }else {
+                    score.value += 3;
+                    score.num += 3;
+                }
                 this.position.shift();
-                score.value += 1;
-                score.num += 1;
                 SCORE.play();
 
                 score.best = Math.max(score.best, score.value);
@@ -623,7 +628,14 @@ const score = {
     boom : function() {
         if (this.skill > 0) {
             //Delete all the pipes
-            this.value += pipes.position.length;
+            for (let i = 0; i < pipes.position.length; i++) {
+                let p = pipes.position[i];
+                if (p.z > 0.7) {
+                    this.value += 3;
+                }else {
+                    this.value += 1;
+                }
+            }
             pipes.position = [];
             this.skill -= 1;
             SKILL.play();
