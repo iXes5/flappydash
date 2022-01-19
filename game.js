@@ -110,7 +110,7 @@ document.addEventListener("keypress", (event) => {
     if (key == "KeyF") {
         if (state.current == state.game) {
             state.current = state.paradise
-        }else if (state.current = state.paradise) {
+        }else if (state.current == state.paradise) {
             stop.cardinal = 1;
         }
     }
@@ -120,6 +120,15 @@ document.addEventListener("keypress", (event) => {
 const stop = {
     cardinal : 0,
     count : 0,
+    w : 60,
+    h : 15,
+
+    draw : function() {
+        if (this.count > 0 && state.current == state.paradise) {
+            ctx.fillStyle = "#0000ff";
+            ctx.fillRect(bird.x - 30, bird.y - 60, this.w - this.count, this.h);
+        }
+    },
 
     update : function() {
         this.count += this.cardinal
@@ -612,20 +621,20 @@ const score = {
     },
 
     boom : function() {
-        if (this.skill > 1) {
+        if (this.skill > 0) {
             //Delete all the pipes
             this.value += pipes.position.length;
             pipes.position = [];
-            this.skill -= 2;
+            this.skill -= 1;
             SKILL.play();
         }
     },
 
     shield : function() {
-        if (this.skill > 2) {
+        if (this.skill > 1) {
             //Gain a shield protect the bird
             bird.protect += 1;
-            this.skill -= 3;
+            this.skill -= 2;
             SKILL.play();
         }
     },
@@ -649,6 +658,7 @@ function draw() {
     getReady.draw();
     gameOver.draw();
     score.draw();
+    stop.draw();
 }
 
 //Update
