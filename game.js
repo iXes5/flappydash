@@ -295,11 +295,6 @@ const bird = {
         //Frame goes from 0 to 4, if 4 again to 0
         this.frame = this.frame%this.animation.length;
 
-        //No flap in paradise
-        if (state.current == state.paradise) {
-            this.frame = 1
-        }
-
         if (state.current == state.getReady) {
             this.y = 150;
             this.rotation = 0 * DEGREE;
