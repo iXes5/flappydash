@@ -295,11 +295,6 @@ const bird = {
         //Frame goes from 0 to 4, if 4 again to 0
         this.frame = this.frame%this.animation.length;
 
-        //No flap in paradise
-        if (state.current == state.paradise) {
-            this.frame = 1
-        }
-
         if (state.current == state.getReady) {
             this.y = 150;
             this.rotation = 0 * DEGREE;
@@ -387,8 +382,12 @@ const bird = {
 
                     score.value += 2;
                     score.num += 2;
-                    score.best = Math.max(score.best, score.value);
-                    localStorage.setItem("best", score.best);
+
+                    if (score.bestScore < score.value) {
+                        score.bestScore = score.value;
+                        localStorage.setItem("bestScore", score.bestScore);
+                        score.check += 1;
+                    }
                 }
             }
         }
@@ -552,8 +551,11 @@ const pipes = {
                 this.position.shift();
                 SCORE.play();
 
-                score.best = Math.max(score.best, score.value);
-                localStorage.setItem("best", score.best);
+                if (score.bestScore < score.value) {
+                    score.bestScore = score.value;
+                    localStorage.setItem("bestScore", score.bestScore);
+                    score.check += 1;
+                }
             }
         }
     },
@@ -574,7 +576,9 @@ const pipes = {
 
 //Score
 const score = {
-    best : parseInt(localStorage.getItem("best")) || 0,
+    bestScore : localStorage.getItem("bestScore") || 0,
+    pro : localStorage.getItem("pro") || 0,
+    check : 0,
     value : 0,
     num : 0,
     skill : 0,
@@ -588,21 +592,37 @@ const score = {
         if (state.current == state.game) {
             ctx.lineWidth = 2;
             ctx.font = "35px Teko";
-            ctx.fillText(this.value, cvs.width/2 - 5, 50);
-            ctx.strokeText(this.value, cvs.width/2 - 5, 50);
+            ctx.fillText(this.value, cvs.width - 50, 50);
+            ctx.strokeText(this.value, cvs.width - 50, 50);
         }else if (state.current == state.over) {
             ctx.font = "25px Teko";
             //Score value
             ctx.fillText(this.value, 225, 235);
             ctx.strokeText(this.value, 225, 235);
             //Score best
-            ctx.fillText(this.best, 225, 277);
-            ctx.strokeText(this.best, 225, 277);
+            ctx.fillText(this.bestScore, 225, 277);
+            ctx.strokeText(this.bestScore, 225, 277);
         }
+
+        //Draw best player
+        ctx.font = "20px Teko";
+        //Score best player
+        ctx.fillText(this.pro, 30, 30);
+        ctx.strokeText(this.pro, 30, 30);
+        //Score best
+        ctx.fillText(this.bestScore, 30, 50);
+        ctx.strokeText(this.bestScore, 30, 50);
 
         //Draw the skill you have after 5 score
         for (let i=0; i < this.skill; i++) {
             ctx.drawImage(star, 0, 0, 2400, 2400, 30 + i*50, cvs.height - 30 - 50, 50, 50)
+        }
+
+        //Save the one who break the record
+        if (this.check > 0 && state.current == state.over) {
+            this.pro = prompt("Master, please tell me your name?");
+            localStorage.setItem("pro", this.pro);
+            this.check = 0;
         }
     },
 
@@ -630,10 +650,17 @@ const score = {
             //Delete all the pipes
             for (let i = 0; i < pipes.position.length; i++) {
                 let p = pipes.position[i];
+
                 if (p.z > 0.7) {
                     this.value += 3;
                 }else {
                     this.value += 1;
+                }
+
+                if (score.bestScore < score.value) {
+                    score.bestScore = score.value;
+                    localStorage.setItem("bestScore", score.bestScore);
+                    score.check += 1;
                 }
             }
             pipes.position = [];
