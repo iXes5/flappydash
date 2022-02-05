@@ -1,6 +1,8 @@
 //Select canvas
-const cvs = document.getElementById("flappy");
+const cvs = document.getElementById("main");
 const ctx = cvs.getContext("2d");
+const but = document.getElementById("button");
+const butCtx = but.getContext("2d");
 
 //Game vars and const
 let frames = 0;
@@ -14,7 +16,9 @@ chicArt.src = "image/chicken.png";
 const star = new Image();
 star.src = "image/star.png"
 const circle = new Image();
-circle.src = "image/circle.png"
+circle.src = "image/circle.png";
+const staff = new Image();
+staff.src = "image/staff.png";
 
 //Load sounds
 const SCORE = new Audio();
@@ -51,21 +55,26 @@ const startButton = {
     h : 29
 }
 
-//Controll the game
+//Controll the game (PC)
 document.addEventListener("click", function(evt) {
+    let rect1 = cvs.getBoundingClientRect();
+    let clickX = evt.clientX - rect1.left;
+    let clickY = evt.clientY - rect1.top;
+
     switch (state.current) {
         case state.getReady:
-            state.current = state.game;
-            SWOOSHING.play();
-            break;
+            if (clickX >= 0 && clickX <= cvs.width && clickY >= 0 && clickY <= cvs.height) {
+                state.current = state.game;
+                SWOOSHING.play();
+                break;
+            }
         case state.game:
-            bird.flap();
-            FLAP.play();
-            break;                                  
+            if (clickX >= 0 && clickX <= cvs.width && clickY >= 0 && clickY <= cvs.height) {
+                bird.flap();
+                FLAP.play();
+                break;
+            }
         case state.over:
-            let rect = cvs.getBoundingClientRect();
-            let clickX = evt.clientX - rect.left;
-            let clickY = evt.clientY - rect.top;
             //Start button check
             if (clickX >= startButton.x && clickX <= startButton.x + startButton.w && clickY >= startButton.y && clickY <= startButton.y + startButton.h) {
                 pipes.reset();
@@ -116,6 +125,61 @@ document.addEventListener("keypress", (event) => {
     }
 }, false)
 
+//Controll the game (phone)
+document.addEventListener("click", function(evt) {
+    let rect2 = but.getBoundingClientRect();
+    let pressX = evt.clientX - rect2.left;
+    let pressY = evt.clientY - rect2.top;
+
+    switch (state.current) {
+        case state.getReady:
+            if (pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
+                state.current = state.game;
+                SWOOSHING.play();
+                break;
+            }
+        case state.game:
+            if (pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
+                bird.flap();
+                FLAP.play();
+                break;
+            }else if (pressX >= button.w2 && pressX <= but.width && pressY >= button.y + 80 && pressY <= button.y + 160) {
+                bird.dash();
+                pipes.cut();
+                DASH.play();
+                break;
+            }else if (pressX >= button.w2 && pressX <= but.width && pressY >= button.y + 160 && pressY <= but.height) {
+                bird.shoot();
+                break;
+            }else if (pressX >= button.w1 && pressX <= button.w1 * 2 && pressY >= button.y && pressY <= button.y + 80) {
+                score.jump();
+                break;
+            }else if (pressX >= button.w1 * 2 && pressX <= button.w1 * 3 && pressY >= button.y && pressY <= button.y + 80) {
+                score.boom();
+                break;
+            }else if (pressX >= button.w1 * 3 && pressX <= but.width && pressY >= button.y && pressY <= button.y + 80) {
+                score.shield();
+                break;
+            }else if (pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
+                state.current = state.paradise;
+                break;
+            }
+        case state.over:
+            if (pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
+                pipes.reset();
+                bird.speedReset();
+                score.reset();
+                state.current = state.getReady;
+                break;
+            }
+        case state.paradise:
+            if (pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
+                stop.cardinal = 1;
+                break;
+            }
+        }
+})
+
 //Delay between paradise
 const stop = {
     cardinal : 0,
@@ -136,6 +200,61 @@ const stop = {
             state.current = state.game;
             this.count = 0;
             this.cardinal = 0;
+        }
+    }
+}
+
+//Button for phone
+const button = {
+    x : 0,
+    y : 0,
+    w1 : but.width/4,
+    w2 : but.width/2,
+    h : 80,
+
+    draw : function() {
+        if (type == "b" || type == "B") {
+            //Dash button
+            butCtx.fillStyle = "#ffff00";
+            butCtx.fillRect(this.w2, this.y + 80, this.w2, this.h);
+            butCtx.fillStyle = "#000000";
+            butCtx.strokeRect(this.w2, this.y + 80, this.w2, this.h);
+
+            //Shoot buuton
+            butCtx.fillStyle = "#008000";
+            butCtx.fillRect(this.w2, this.y + 160, this.w2, this.h);
+            butCtx.fillStyle = "#000000";
+            butCtx.strokeRect(this.w2, this.y + 160, this.w2, this.h);
+
+            //Flap button
+            butCtx.fillStyle = "#70c5ce";
+            butCtx.fillRect(0, this.y + 80, this.w2, this.h * 2);
+            butCtx.fillStyle = "#000000";
+            butCtx.strokeRect(0, this.y + 80, this.w2, this.h * 2);
+
+            //Pause button
+            butCtx.fillStyle = "#808080";
+            butCtx.fillRect(0, this.y, this.w1, this.h);
+            butCtx.fillStyle = "#000000";
+            butCtx.strokeRect(0, this.y, this.w1, this.h);
+
+            //Q skill button
+            butCtx.fillStyle = "#ff4500";
+            butCtx.fillRect(this.w1, this.y, this.w1, this.h);
+            butCtx.fillStyle = "#000000";
+            butCtx.strokeRect(this.w1, this.y, this.w1, this.h);
+
+            //W skill button
+            butCtx.fillStyle = "#ff4500";
+            butCtx.fillRect(this.w1 * 2, this.y, this.w1, this.h);
+            butCtx.fillStyle = "#000000";
+            butCtx.strokeRect(this.w1 * 2, this.y, this.w1, this.h);
+
+            //E skill button
+            butCtx.fillStyle = "#ff0000";
+            butCtx.fillRect(this.w1 * 3, this.y, this.w1, this.h);
+            butCtx.fillStyle = "#000000";
+            butCtx.strokeRect(this.w1 * 3, this.y, this.w1, this.h);
         }
     }
 }
@@ -279,6 +398,10 @@ const bird = {
                 ctx.drawImage(circle, 0, 0, 2000, 2000, this.x - 25 - i*10, this.y - 25 - i*10, 50 + 2*i*10, 50 + 2*i*10)
             }
         }
+
+        //Draw jump tail
+        ctx.fillStyle = "#ff4500";
+        ctx.fillRect(this.jX, this.jY, 200, 4);
     },
 
     flap : function() {
@@ -391,6 +514,11 @@ const bird = {
                 }
             }
         }
+
+        //Move jump tail to the left
+        if (state.current == state.game) {
+            this.jX -= this.dx;
+        }
     },
 
     dash : function() {
@@ -424,6 +552,7 @@ const bird = {
         this.tail = [];
         this.bullet = [];
         this.protect = 0;
+        this.jX = -200;
     },
 }
 
@@ -450,6 +579,9 @@ const pipes = {
     
     chiW : 652,
     chiH : 779,
+
+    jX : -200,
+    jY : 0,
 
     draw : function() {
         for (let i = 0; i < this.position.length; i++) {
@@ -583,6 +715,8 @@ const score = {
     num : 0,
     skill : 0,
     flash : 200,
+    Wcount : 0,
+    Wcardinal : 0,
 
     draw : function() {
         ctx.fillStyle = "#FFF";
@@ -597,11 +731,11 @@ const score = {
         }else if (state.current == state.over) {
             ctx.font = "25px Teko";
             //Score value
-            ctx.fillText(this.value, 225, 235);
-            ctx.strokeText(this.value, 225, 235);
+            ctx.fillText(this.value, 265, 235);
+            ctx.strokeText(this.value, 265, 235);
             //Score best
-            ctx.fillText(this.bestScore, 225, 277);
-            ctx.strokeText(this.bestScore, 225, 277);
+            ctx.fillText(this.bestScore, 265, 277);
+            ctx.strokeText(this.bestScore, 265, 277);
         }
 
         //Draw best player
@@ -624,30 +758,29 @@ const score = {
             localStorage.setItem("pro", this.pro);
             this.check = 0;
         }
+
+        //Draw the staff
+        if (this.Wcardinal > 0) {
+            ctx.save();
+            ctx.translate(bird.x, bird.y);
+            ctx.rotate(this.Wcount * DEGREE);
+            ctx.drawImage(staff, 0, 0, 512, 512, - bird.w/2 - 15, - bird.h/2 - 15, bird.w + 30, bird.h + 30);
+            ctx.restore();
+        }
     },
 
     update : function() {
+        //Each 5 points, get 1 star
         if (this.num >= 5) {
             this.skill +=1;
             this.num -= 5;
-        }
-    },
+        };
 
-    jump : function() {
-        if (this.skill > 0) {
-            for (let i = 0; i < pipes.position.length; i++) {
-                let p = pipes.position[i];
-                //Move the pipes very long to the left (flash)
-                p.x -= this.flash;
-                this.skill -= 1;
-                SKILL.play();
-            }
-        }
-    },
+        //Wcount up like pause
+        this.Wcount += this.Wcardinal;
 
-    boom : function() {
-        if (this.skill > 0) {
-            //Delete all the pipes
+        //Delete all the pipes
+        if (this.Wcount == 90) {
             for (let i = 0; i < pipes.position.length; i++) {
                 let p = pipes.position[i];
 
@@ -665,7 +798,31 @@ const score = {
             }
             pipes.position = [];
             this.skill -= 1;
+            this.Wcount = 0;
+            this.Wcardinal = 0;
             SKILL.play();
+        }
+    },
+
+    jump : function() {
+        if (this.skill > 0) {
+            for (let i = 0; i < pipes.position.length; i++) {
+                let p = pipes.position[i];
+                //Move the pipes very long to the left (flash)
+                p.x -= this.flash;
+                this.skill -= 1;
+                SKILL.play();
+            };
+
+            //Add jump tail
+            bird.jX = bird.x - bird.w/2 - 200;
+            bird.jY = bird.y - 2;
+        }
+    },
+
+    boom : function() {
+        if (this.skill > 0) {
+            this.Wcardinal = 3;
         }
     },
 
@@ -698,6 +855,10 @@ function draw() {
     gameOver.draw();
     score.draw();
     stop.draw();
+    button.draw();
+
+    ctx.fillStyle = "#000000";
+    ctx.strokeRect(0, 0, cvs.width, cvs.height);
 }
 
 //Update

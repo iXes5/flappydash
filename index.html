@@ -7,21 +7,25 @@
     <meta name="author" content="Vu Quang">
     <title>A cute bird, but it has a gun :&#60</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Teko:700">
-    <link rel="stylesheet" href="./style.css">
-
-    <script>
-        alert("Hey, this game has a bit change, see the title, right?\nYou can press S to shoot, and D to dash\nYou can also use Q, W and E for special skills\nAnd F is pause\nDid you take it?:>")
-    </script>
 </head>
 <body>
-    <canvas id="flappy" width="400" height="480"></canvas>
+    <script>
+        alert("Hey, this game has a bit change, see the title, right?\nYou can press S to shoot, and D to dash\nYou can also use Q, W and E for special skills\nAnd F is pause\nDid you take it?:>");
+        
+        var type = prompt("What type of your device are you using?\nA for PC, B for smart phone");
+    </script>
+
+    <canvas id="main" width="400" height="480"></canvas>
+
+    <canvas id="button" width="400" height="240"></canvas>
+
     <style>
         canvas {
-            border: 1px solid black;
             display: block;
             margin: 0 auto;
         }
     </style>
+
     <script src="game.js"></script>
 </body>
 </html>
