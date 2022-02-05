@@ -777,7 +777,9 @@ const score = {
         };
 
         //Wcount up like pause
-        this.Wcount += this.Wcardinal;
+        if (state.current == state.game) {
+            this.Wcount += this.Wcardinal;
+        }
 
         //Delete all the pipes
         if (this.Wcount == 90) {
@@ -797,7 +799,6 @@ const score = {
                 }
             }
             pipes.position = [];
-            this.skill -= 1;
             this.Wcount = 0;
             this.Wcardinal = 0;
             SKILL.play();
@@ -822,6 +823,7 @@ const score = {
 
     boom : function() {
         if (this.skill > 0) {
+            this.skill -= 1;
             this.Wcardinal = 3;
         }
     },
@@ -852,10 +854,10 @@ function draw() {
     fg.draw();
     bird.draw();
     getReady.draw();
-    gameOver.draw();
     score.draw();
     stop.draw();
     button.draw();
+    gameOver.draw();
 
     ctx.fillStyle = "#000000";
     ctx.strokeRect(0, 0, cvs.width, cvs.height);
