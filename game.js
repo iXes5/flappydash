@@ -19,6 +19,20 @@ const circle = new Image();
 circle.src = "image/circle.png";
 const staff = new Image();
 staff.src = "image/staff.png";
+const pap = new Image();
+pap.src = "image/pap.png";
+const jump = new Image();
+jump.src = "image/jump.png";
+const boom = new Image();
+boom.src = "image/boom.png";
+const shield = new Image();
+shield.src = "image/shield.png";
+const thrust = new Image();
+thrust.src = "image/thrust.png";
+const bullet = new Image();
+bullet.src = "image/bullet.png";
+const arrow = new Image();
+arrow.src = "image/arrow.png";
 
 //Load sounds
 const SCORE = new Audio();
@@ -71,7 +85,6 @@ document.addEventListener("click", function(evt) {
         case state.game:
             if (clickX >= 0 && clickX <= cvs.width && clickY >= 0 && clickY <= cvs.height) {
                 bird.flap();
-                FLAP.play();
                 break;
             }
         case state.over:
@@ -92,7 +105,6 @@ document.addEventListener("keypress", (event) => {
     if (key == "KeyD" && state.current == state.game) {
             bird.dash();
             pipes.cut();
-            DASH.play();
     }
 
     //Press S to shoot
@@ -127,57 +139,62 @@ document.addEventListener("keypress", (event) => {
 
 //Controll the game (phone)
 document.addEventListener("click", function(evt) {
-    let rect2 = but.getBoundingClientRect();
-    let pressX = evt.clientX - rect2.left;
-    let pressY = evt.clientY - rect2.top;
+    if (type !== "") {
+        let rect2 = but.getBoundingClientRect();
+        let pressX = evt.clientX - rect2.left;
+        let pressY = evt.clientY - rect2.top;
 
-    switch (state.current) {
-        case state.getReady:
-            if (pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
-                state.current = state.game;
-                SWOOSHING.play();
-                break;
-            }
-        case state.game:
+        //Get ready
+        if (state.current == state.getReady && pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
+            state.current = state.game;
+            SWOOSHING.play();
+        }
+
+        //Game
+        if (state.current == state.game) {
             if (pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
                 bird.flap();
-                FLAP.play();
-                break;
+            //Flap button (main)
+
             }else if (pressX >= button.w2 && pressX <= but.width && pressY >= button.y + 80 && pressY <= button.y + 160) {
                 bird.dash();
                 pipes.cut();
-                DASH.play();
-                break;
+            //Dash button
+
             }else if (pressX >= button.w2 && pressX <= but.width && pressY >= button.y + 160 && pressY <= but.height) {
                 bird.shoot();
-                break;
+            //Shoot button
+
             }else if (pressX >= button.w1 && pressX <= button.w1 * 2 && pressY >= button.y && pressY <= button.y + 80) {
                 score.jump();
-                break;
+            //Q skill button
+
             }else if (pressX >= button.w1 * 2 && pressX <= button.w1 * 3 && pressY >= button.y && pressY <= button.y + 80) {
                 score.boom();
-                break;
+            //W skill button
+
             }else if (pressX >= button.w1 * 3 && pressX <= but.width && pressY >= button.y && pressY <= button.y + 80) {
                 score.shield();
-                break;
-            }else if (pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
-                state.current = state.paradise;
-                break;
-            }
-        case state.over:
-            if (pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
-                pipes.reset();
-                bird.speedReset();
-                score.reset();
-                state.current = state.getReady;
-                break;
-            }
-        case state.paradise:
-            if (pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
-                stop.cardinal = 1;
-                break;
+            //E skill button
+
             }
         }
+
+        //Over
+        if (state.current == state.over && pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
+            pipes.reset();
+            bird.speedReset();
+            score.reset();
+            state.current = state.getReady;
+        }
+
+        //Pause and play button
+        if (state.current == state.game && pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
+            state.current = state.paradise;
+        }else if (state.current == state.paradise && pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
+            stop.cardinal = 1;
+        }
+    }
 })
 
 //Delay between paradise
@@ -209,52 +226,81 @@ const button = {
     x : 0,
     y : 0,
     w1 : but.width/4,
-    w2 : but.width/2,
+    w2 : but.width/3,
     h : 80,
 
     draw : function() {
-        if (type == "b" || type == "B") {
+        if (type !== "") {
             //Dash button
             butCtx.fillStyle = "#ffff00";
-            butCtx.fillRect(this.w2, this.y + 80, this.w2, this.h);
+            butCtx.fillRect(this.w2 * 2, this.y + this.h, this.w2, this.h);
             butCtx.fillStyle = "#000000";
-            butCtx.strokeRect(this.w2, this.y + 80, this.w2, this.h);
+            butCtx.strokeRect(this.w2 * 2, this.y + this.h, this.w2, this.h);
+            butCtx.save();
+            butCtx.translate(this.w2 * 2 + this.w2/2, this.h + this.h/2);
+            butCtx.rotate(180 * DEGREE);
+            butCtx.drawImage(thrust, 0, 0, 128, 128, - this.w2/4, - this.h/4, this.w2/2, this.h/2);
+            butCtx.restore();
 
             //Shoot buuton
             butCtx.fillStyle = "#008000";
-            butCtx.fillRect(this.w2, this.y + 160, this.w2, this.h);
+            butCtx.fillRect(this.w2, this.y + this.h, this.w2, this.h);
             butCtx.fillStyle = "#000000";
-            butCtx.strokeRect(this.w2, this.y + 160, this.w2, this.h);
+            butCtx.strokeRect(this.w2, this.y + this.h, this.w2, this.h);
+            butCtx.drawImage(bullet, 0, 0, 128, 128, this.w2 + this.w2/3, this.h + this.h/3, this.w2/3, this.h/3);
 
-            //Flap button
+
+            //Flap button (main)
             butCtx.fillStyle = "#70c5ce";
-            butCtx.fillRect(0, this.y + 80, this.w2, this.h * 2);
+            butCtx.fillRect(this.x, this.y + this.h, this.w2, this.h);
             butCtx.fillStyle = "#000000";
-            butCtx.strokeRect(0, this.y + 80, this.w2, this.h * 2);
+            butCtx.strokeRect(this.x, this.y + this.h, this.w2, this.h);
+            butCtx.save();
+            butCtx.translate(this.w2/2, this.h + this.h/2);
+            butCtx.rotate(- 90 * DEGREE);
+            butCtx.drawImage(arrow, 0, 0, 128, 128, - this.w2/4, - this.h/4, this.w2/2, this.h/2);
+            butCtx.restore();
 
             //Pause button
             butCtx.fillStyle = "#808080";
-            butCtx.fillRect(0, this.y, this.w1, this.h);
+            butCtx.fillRect(this.x, this.y, this.w1, this.h);
             butCtx.fillStyle = "#000000";
-            butCtx.strokeRect(0, this.y, this.w1, this.h);
+            butCtx.strokeRect(this.x, this.y, this.w1, this.h);
+            butCtx.drawImage(pap, 0, 0, 128, 128, this.w1/4, this.h/4, this.w1/2, this.h/2);
+
 
             //Q skill button
-            butCtx.fillStyle = "#ff4500";
+            if (score.skill > 0) {
+                butCtx.fillStyle = "#ff4500";
+            }else {
+                butCtx.fillStyle = "#ff8c00";
+            }
             butCtx.fillRect(this.w1, this.y, this.w1, this.h);
             butCtx.fillStyle = "#000000";
             butCtx.strokeRect(this.w1, this.y, this.w1, this.h);
+            butCtx.drawImage(jump, this.w1 + this.w1/4, this.h/4, this.w1/2, this.h/2);
 
             //W skill button
-            butCtx.fillStyle = "#ff4500";
-            butCtx.fillRect(this.w1 * 2, this.y, this.w1, this.h);
+            if (score.skill > 0) {
+                butCtx.fillStyle = "#ff4500";
+            }else {
+                butCtx.fillStyle = "#ff8c00";
+            }            butCtx.fillRect(this.w1 * 2, this.y, this.w1, this.h);
             butCtx.fillStyle = "#000000";
             butCtx.strokeRect(this.w1 * 2, this.y, this.w1, this.h);
+            butCtx.drawImage(boom, 0, 0, 128, 128, this.w1 * 2 + this.w1/4, this.h/4, this.w1/2, this.h/2);
+
 
             //E skill button
-            butCtx.fillStyle = "#ff0000";
+            if (score.skill > 0) {
+                butCtx.fillStyle = "#ff0000";
+            }else {
+                butCtx.fillStyle = "#b22222";
+            }
             butCtx.fillRect(this.w1 * 3, this.y, this.w1, this.h);
             butCtx.fillStyle = "#000000";
             butCtx.strokeRect(this.w1 * 3, this.y, this.w1, this.h);
+            butCtx.drawImage(shield, 0, 0, 128, 128, this.w1 * 3 + this.w1/4, this.h/4, this.w1/2, this.h/2);
         }
     }
 }
@@ -406,6 +452,7 @@ const bird = {
 
     flap : function() {
         this.speed = - this.jump;
+        FLAP.play();
     },
 
     update : function() {
@@ -527,6 +574,7 @@ const bird = {
             tX : this.x - this.w/2 - 70,
             tY : this.y - 2,
         });
+        DASH.play();
 
         for (let i = 0; i < this.tail.length - 1; i++) {
             if (state.current !== state.game) return;
@@ -841,6 +889,8 @@ const score = {
         this.value = 0;
         this.num = 0;
         this.skill = 0;
+        this.Wcount = 0;
+        this.Wcardinal = 0;
     }
 }
 
