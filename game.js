@@ -145,23 +145,23 @@ document.addEventListener("click", function(evt) {
         let pressY = evt.clientY - rect2.top;
 
         //Get ready
-        if (state.current == state.getReady && pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
+        if (state.current == state.getReady && pressX >= button.x && pressX <= button.w2 && pressY >= button.h && pressY <= but.height) {
             state.current = state.game;
             SWOOSHING.play();
         }
 
         //Game
         if (state.current == state.game) {
-            if (pressX >= 0 && pressX <= button.w2 && pressY >= button.y + 80 && pressY <= but.height) {
+            if (pressX >= button.x && pressX <= button.w2 && pressY >= button.h && pressY <= but.height) {
                 bird.flap();
             //Flap button (main)
 
-            }else if (pressX >= button.w2 && pressX <= but.width && pressY >= button.y + 80 && pressY <= button.y + 160) {
+            }else if (pressX >= button.w2 * 2 && pressX <= but.width && pressY >= button.h && pressY <= but.height) {
                 bird.dash();
                 pipes.cut();
             //Dash button
 
-            }else if (pressX >= button.w2 && pressX <= but.width && pressY >= button.y + 160 && pressY <= but.height) {
+            }else if (pressX >= button.w2 && pressX <= button.w2 * 2 && pressY >= button.h && pressY <= but.height) {
                 bird.shoot();
             //Shoot button
 
