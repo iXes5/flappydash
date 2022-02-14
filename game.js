@@ -4,7 +4,7 @@ const ctx = cvs.getContext("2d");
 const but = document.getElementById("button");
 const butCtx = but.getContext("2d");
 
-//Game vars and const
+//Game key (time)
 let frames = 0;
 const DEGREE = Math.PI/180;
 
@@ -15,8 +15,6 @@ const chicArt = new Image();
 chicArt.src = "image/chicken.png";
 const star = new Image();
 star.src = "image/star.png"
-const circle = new Image();
-circle.src = "image/circle.png";
 const staff = new Image();
 staff.src = "image/staff.png";
 const pap = new Image();
@@ -58,7 +56,7 @@ const state = {
     getReady : 0,
     game : 1,
     over : 2,
-    paradise : 3
+    pause : 3
 }
 
 //Start button
@@ -130,8 +128,8 @@ document.addEventListener("keypress", (event) => {
     //Press F to stop
     if (key == "KeyF") {
         if (state.current == state.game) {
-            state.current = state.paradise
-        }else if (state.current == state.paradise) {
+            state.current = state.pause
+        }else if (state.current == state.pause) {
             stop.cardinal = 1;
         }
     }
@@ -190,14 +188,14 @@ document.addEventListener("click", function(evt) {
 
         //Pause and play button
         if (state.current == state.game && pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
-            state.current = state.paradise;
-        }else if (state.current == state.paradise && pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
+            state.current = state.pause;
+        }else if (state.current == state.pause && pressX >= 0 && pressX <= button.w1 && pressY >= button.y && pressY <= button.y + 80) {
             stop.cardinal = 1;
         }
     }
 })
 
-//Delay between paradise
+//Delay in pause state
 const stop = {
     cardinal : 0,
     count : 0,
@@ -205,7 +203,7 @@ const stop = {
     h : 15,
 
     draw : function() {
-        if (this.count > 0 && state.current == state.paradise) {
+        if (this.count > 0 && state.current == state.pause) {
             ctx.fillStyle = "#0000ff";
             ctx.fillRect(bird.x - 30, bird.y - 60, this.w - this.count, this.h);
         }
@@ -242,7 +240,7 @@ const button = {
             butCtx.drawImage(thrust, 0, 0, 128, 128, - this.w2/4, - this.h/4, this.w2/2, this.h/2);
             butCtx.restore();
 
-            //Shoot buuton
+            //Shoot button
             butCtx.fillStyle = "#008000";
             butCtx.fillRect(this.w2, this.y + this.h, this.w2, this.h);
             butCtx.fillStyle = "#000000";
@@ -292,7 +290,7 @@ const button = {
 
 
             //E skill button
-            if (score.skill > 0) {
+            if (score.skill > 1) {
                 butCtx.fillStyle = "#ff0000";
             }else {
                 butCtx.fillStyle = "#b22222";
@@ -441,7 +439,11 @@ const bird = {
         //Draw shield
         if (this.protect > 0) {
             for (let i = 0; i < this.protect; i++) {
-                ctx.drawImage(circle, 0, 0, 2000, 2000, this.x - 25 - i*10, this.y - 25 - i*10, 50 + 2*i*10, 50 + 2*i*10)
+                ctx.beginPath();
+                ctx.strokeStyle = "#ff0000";
+                ctx.lineWidth = 5;
+                ctx.arc(this.x, this.y, 1.5 * this.radius + i * 10, 0, 2 * Math.PI);
+                ctx.stroke();
             }
         }
 
@@ -468,7 +470,7 @@ const bird = {
         if (state.current == state.getReady) {
             this.y = 150;
             this.rotation = 0 * DEGREE;
-        }else if (state.current !== state.paradise) {
+        }else if (state.current !== state.pause) {
             this.speed += this.gravity;
             this.y += this.speed;
             //Foreground touch
@@ -797,7 +799,7 @@ const score = {
 
         //Draw the skill you have after 5 score
         for (let i=0; i < this.skill; i++) {
-            ctx.drawImage(star, 0, 0, 2400, 2400, 30 + i*50, cvs.height - 30 - 50, 50, 50)
+            ctx.drawImage(star, 0, 0, 128, 128, 30 + i*50, cvs.height - 30 - 50, 50, 50)
         }
 
         //Save the one who break the record
@@ -927,7 +929,7 @@ function loop() {
     update();
     draw();
 
-    if (state.current !== state.paradise) {
+    if (state.current !== state.pause) {
         frames++
     }
 
