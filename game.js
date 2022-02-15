@@ -17,8 +17,10 @@ const star = new Image();
 star.src = "image/star.png"
 const staff = new Image();
 staff.src = "image/staff.png";
-const pap = new Image();
-pap.src = "image/pap.png";
+const pause = new Image();
+pause.src = "image/pause.png";
+const play = new Image();
+play.src = "image/play.png";
 const jump = new Image();
 jump.src = "image/jump.png";
 const boom = new Image();
@@ -67,7 +69,7 @@ const startButton = {
     h : 29
 }
 
-//Controll the game (PC)
+//Control the game (PC)
 document.addEventListener("click", function(evt) {
     let rect1 = cvs.getBoundingClientRect();
     let clickX = evt.clientX - rect1.left;
@@ -135,7 +137,7 @@ document.addEventListener("keypress", (event) => {
     }
 }, false)
 
-//Controll the game (phone)
+//Control the game (phone)
 document.addEventListener("click", function(evt) {
     if (type !== "") {
         let rect2 = but.getBoundingClientRect();
@@ -264,8 +266,11 @@ const button = {
             butCtx.fillRect(this.x, this.y, this.w1, this.h);
             butCtx.fillStyle = "#000000";
             butCtx.strokeRect(this.x, this.y, this.w1, this.h);
-            butCtx.drawImage(pap, 0, 0, 128, 128, this.w1/4, this.h/4, this.w1/2, this.h/2);
-
+            if (state.current !== state.pause) {
+                butCtx.drawImage(pause, 0, 0, 128, 128, this.w1/4, this.h/4, this.w1/2, this.h/2);
+            }else {
+                butCtx.drawImage(play, 0, 0, 128, 128, this.w1/4, this.h/4, this.w1/2, this.h/2);
+            }
 
             //Q skill button
             if (score.skill > 0) {
