@@ -139,7 +139,7 @@ document.addEventListener("keypress", (event) => {
 
 //Control the game (phone)
 document.addEventListener("click", function(evt) {
-    if (type !== "") {
+    if (type == true) {
         let rect2 = but.getBoundingClientRect();
         let pressX = evt.clientX - rect2.left;
         let pressY = evt.clientY - rect2.top;
@@ -230,7 +230,7 @@ const button = {
     h : 80,
 
     draw : function() {
-        if (type !== "") {
+        if (type == true) {
             //Dash button
             butCtx.fillStyle = "#ffff00";
             butCtx.fillRect(this.w2 * 2, this.y + this.h, this.w2, this.h);
